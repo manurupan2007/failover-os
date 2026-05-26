@@ -1,25 +1,20 @@
 # FailoverOS — Autonomous Resilience Layer for AI Infrastructure
 
-> A deep-tech infrastructure intelligence cockpit, failure prediction engine, and autonomous self-healing planner designed to safeguard LLM agent workflows and microservice topologies against cascading outages. Built for the **TrueFoundry Resilient Agents Challenge** at AI DevSummit 2026.
+> A production-grade telemetry cockpit, cascading failure predictor, and autonomous self-healing coordinator designed to safeguard LLM agent swarms, vector store integrations, and tool execution pipelines against infrastructure collapses.
 
 ---
 
-## 🚀 Overview
+## 🚀 Project Overview
 
-LLM-based multi-agent systems represent a shift in software engineering, yet they remain vulnerable to the fragility of external APIs, vector store indices, tool-execution engines, and local host processes. A single rate-limit error, upstream latency spike, or vector database connection timeout can trigger retry storms, locking agent execution loops, inflating token usage, and stalling critical customer workflows.
+Multi-agent AI architectures represent a major advancement in application design, but they introduce a new layer of infrastructure fragility. A single rate-limit bottleneck (HTTP 429), upstream API outage (HTTP 503), or vector index segment lock can propagate latency spikes upstream, trigger infinite agent retry loops, inflate token billing expenses, and crash client workflows.
 
-**FailoverOS** acts as a self-healing middleware and visual simulation environment for AI infrastructure. It monitors the health of upstream LLM providers, vector stores, and Model Context Protocol (MCP) host servers, models cascading failure vectors, and executes autonomous self-healing policies (e.g., fallback model routing, Pinecone circuit breakers, context prompt compression, and static agent execution fallback states) in real-time before outages breach SLAs.
-
-### Why It Matters
-* **Saves Customer Workflows**: Prevents agent loops from crashing when external endpoints return 503 or 429 status codes.
-* **Eliminates Billing Spikes**: Auto-rebalances traffic away from congested routes, avoiding token wastage in infinite retry storms.
-* **Proves Self-Healing**: Includes an interactive **SLA Resilience Sandbox** demonstrating how chat queries gracefully degrade from nominal state to cache fallback without breaking client-side UX.
+**FailoverOS** is an enterprise-grade simulator and resilience manager for agentic AI infrastructure. By acting as an intelligent orchestration controller, it monitors the health of upstream LLM backends (OpenAI, Anthropic, Local models), prompt cache tiers, vector index partitions, and Model Context Protocol (MCP) tool hosts. It utilizes graph-based BFS paths to detect cascading risks and applies autonomous healing policies (e.g., dynamic model failover, prompt context compression, circuit breakers, and degraded mock-tool operations) in real-time to keep workflows running within strict SLA targets.
 
 ---
 
 ## 🛠️ System Architecture
 
-FailoverOS is split into a high-performance simulation core (operating on an immutable telemetry snapshot cycle) and a Vercel/Linear-inspired React HUD dashboard.
+FailoverOS divides its responsibilities between a high-performance, event-driven simulation kernel and a sleek, minimal, analytics-focused operator dashboard.
 
 ```mermaid
 graph TD
@@ -28,85 +23,56 @@ graph TD
     TG -->|Fallback Path: Claude 3.5 Sonnet| Anthropic[Anthropic API]
     TG -->|Local Fallback: Llama-3| Local[Local LLM Provider]
     
-    Agent[Agent Swarm] -->|Semantic Index| VDB[Vector Database]
+    Agent[Agent Swarm Core] -->|Semantic Search| VDB[Vector Database]
     Agent -->|Action execution| MCP[MCP Tool Host]
     
-    SE[Simulation Engine] -->|Realtime Telemetry| AE[AI Engine Cascading Predictor]
+    SE[Simulation Engine] -->|Real-time Telemetry| AE[AI Engine Cascading Predictor]
     AE -->|Anomaly Warnings| RE[Recovery Engine Self-Healing Planner]
     RE -->|Autonomous Mitigations| SE
 ```
 
 ### Module Breakdown
-* **Telemetry Core (`/src/engine/simulationEngine.ts`)**: Manages the main execution tick loop, flow parameters (RPS/latency), queue depths, and chaos scenarios. Evaluates connection links and pushes telemetry snapshots.
-* **Cascading Risk Predictor (`/src/engine/aiEngine.ts`)**: Inspects node relations. Uses graph-based BFS path searches to estimate time-to-outage (TTO) when upstream hubs stall, warning operators of imminent queue blockages.
-* **Recovery Orchestrator (`/src/engine/recoveryEngine.ts`)**: Generates mitigation blueprints (Failovers, Circuit Breaking, Context Compression, Load Rebalancing). In autonomous mode, policies are applied instantly.
-* **Interactive Sandbox (`/src/pages/Dashboard.tsx`)**: Integrates chat execution logs with active simulation metrics. Enables visual testing of graceful client degradation in real-time.
+* **Simulation Core (`/src/engine/simulationEngine.ts`)**: Manages the main execution tick loop, traffic throughput (RPS), node response latency, queue depths, resources (CPU/Memory), and chaos scenario injections.
+* **Cascading Risk Predictor (`/src/engine/aiEngine.ts`)**: Models upstream-downstream dependency chains. Searches the topology graph to warn operators of incoming bottlenecks when dependencies fail.
+* **Recovery Engine (`/src/engine/recoveryEngine.ts`)**: Formulates mitigation plans (Circuit Breaking, Dynamic Failover, Context Compression, Load Rebalancing). 
+* **State Timeline Tracker (`/src/engine/replaySystem.ts`)**: Logs historical snapshots on every tick for debugging and scrubbing.
+* **SLA Sandbox (`/src/pages/Dashboard.tsx`)**: An interactive playground demonstrating how chat queries degrade gracefully to local caches/mock tools during active outages.
 
 ---
 
 ## 💎 Features
 
-* **Interactive Topology Map**: Custom SVG nodes-and-connections canvas showing active traffic load flowing through particle flows. Features live hover metrics and responsive SVG scaling ratios.
-* **11 Chaos Engineering Injectors**: Inject upstream rate limits, memory leaks, agent deadlocks, API outages, database corruptions, and MCP process crashes.
-* **Pre-Configured Scenarios**: Trigger multi-stage outages (e.g., "LLM Blackout" or "RAG Collapse") to observe cascading queue saturation.
-* **Dynamic SLA Scorecard**: Monitors uptime SLAs, response target latencies, and average Time-To-Recover (MTTR) against strict compliance targets.
-* **Chronological Scrubber Replay**: Full playback console allowing developers to step backward and forward through historical snapshots to debug outages.
+* **Sleek Infrastructure Map**: A custom SVG topology graph visualizing live request flow, load metrics, and node status colors (Emerald for healthy, Amber for unstable, Rose for critical, Cyan for recovering).
+* **10 Advanced Chaos Engineering Scenarios**:
+  1. *LLM Blackout*: OpenAI API goes offline.
+  2. *Retry Storm*: Loop storm overloading gateway queue layers.
+  3. *Vector DB Corruption*: Pineapple database returns checksum mismatches.
+  4. *MCP Tool Crash*: Tool Executor process crashes via segmentation fault.
+  5. *Gateway Memory Leak*: Memory ceiling heap pressure causing GC freezes.
+  6. *Queue Saturation*: Buffer queue allocation exhausted, request drops.
+  7. *Regional Outage*: AWS US-East-1 region blackout ( severed BGP routing).
+  8. *Token Flood Attack*: Multi-prompt payload surge exceeding 300k tokens.
+  9. *Agent Deadlock*: Swarm loop deadlocked in cyclical dependencies.
+  10. *Latency Cascade*: Downstream index locks propagating latency delay upstream.
+* **Autonomous Orchestration Demo**: A scripted 24-second self-healing flow demonstrating outage injection, AI detection alerts, load rebalancing, token flood overload, prompt compression mitigation, and clean recovery.
+* **Dual Telemetry Console**: Side-by-side scrolls showing raw platform logs (System Observability) and cognitive traces (AI Decision Stream).
+* **SLO Compliance Tracker**: Metrics dashboard showing overall Resilience Index, average response latencies, and Mean Time To Recover (MTTR).
+* **Chronological Scrubber**: Replay system allowing operators to step forward/backward through history.
 
 ---
 
 ## 💻 Tech Stack
 
 * **Core Framework**: React 19 + TypeScript + Vite 8
-* **Styling & Theme**: Tailwind CSS v4 (Sleek, dark, glassmorphic HUD style)
-* **Icons & Assets**: Lucide React + custom inline SVG matrices
-* **Build toolchain**: ESNext compiler targets (`tsc -b` compiling in <500ms)
-
----
-
-## 📂 Project Directory Structure
-
-FailoverOS adheres to a scalable, organized folder architecture:
-
-```text
-failover-os/
-├── public/                  # Static assets and SVG icons
-│   ├── favicon.svg          # Custom brand favicon
-│   └── icons.svg            # Graphic layout elements
-├── src/
-│   ├── assets/              # Static media files (e.g., logo images)
-│   ├── components/
-│   │   ├── common/          # Reusable shell & error boundaries
-│   │   │   ├── ErrorBoundary.tsx
-│   │   │   └── LoadingScreen.tsx
-│   │   └── dashboard/       # Dashboard telemetry HUD widgets
-│   │       ├── AlertStream.tsx
-│   │       ├── AnalyticsPage.tsx
-│   │       ├── ChaosPanel.tsx
-│   │       ├── MetricsPanel.tsx
-│   │       ├── ReplayCenter.tsx
-│   │       └── TopologyGraph.tsx
-│   ├── engine/              # Core business simulation kernels
-│   │   ├── aiEngine.ts      # Graph failure propagation and BFS warnings
-│   │   ├── recoveryEngine.ts# Mitigation planning and autonomous policies
-│   │   ├── replaySystem.ts  # Timeline state snapshot tracking
-│   │   ├── simulationEngine.ts # Telemetry tick loop and chaos handlers
-│   │   └── types.ts         # Strictly-typed schemas and interfaces
-│   ├── pages/               # Page layouts
-│   │   ├── LandingPage.tsx  # Hero portal for AI DevSummit 2026
-│   │   └── Dashboard.tsx    # Operations Control Room & Chat Sandbox
-│   ├── App.tsx              # Routing and primary simulation state manager
-│   ├── main.tsx             # DOM mounting and ErrorBoundary wrapper
-│   └── index.css            # Base Tailwind v4 styles and font configs
-├── index.html               # Main HTML wrapper (SEO meta tagged)
-├── vite.config.ts           # Development server configs
-└── tsconfig.json            # Strict TypeScript configuration
-```
+* **Styling & Theme**: Tailwind CSS v4 (Clean, minimal, slate enterprise dashboard theme)
+* **Icons & Graphics**: Lucide React + custom responsive SVGs
+* **Build System**: ESNext compiler targets (`tsc -b` + vite production minifier)
 
 ---
 
 ## ⚡ Installation & Setup
 
-Follow these steps to run FailoverOS locally:
+Ensure you have Node.js (v18+) and npm installed on your system.
 
 ### 1. Clone the repository
 ```bash
@@ -115,53 +81,74 @@ cd failover-os
 ```
 
 ### 2. Install dependencies
-Ensure you have Node.js (v18+) and npm installed.
 ```bash
 npm install
 ```
 
-### 3. Start the dev server
-Run the development environment locally:
+### 3. Start local development server
 ```bash
 npm run dev
 ```
 Open your browser and navigate to `http://localhost:5173`.
 
 ### 4. Build for production
-To build and optimize files for deployment (creates production bundle under `/dist` in <500ms):
 ```bash
 npm run build
 ```
+Creates minified assets under `/dist` in `<500ms`.
 
 ---
 
-## 🧠 Engineering & Design Decisions
+## ⚙️ Environment Variables
 
-### 1. High-Performance Snapshot Copying (Zero GC Pressure)
-Rather than executing expensive `JSON.parse(JSON.stringify(...))` chains on every 1-second simulation tick (which causes garbage collector latency and frame-drops over extended periods), we implemented a structural `.map()` mapping system. Only the mutable reference fields (`nodes` and `connections`) are cloned during telemetry captures, while the rest are passed using fast shallow arrays. This ensures memory leaks are nonexistent and CPU utilization remains minimal.
+Copy the environment template to customize variables:
+```bash
+cp .env.example .env.local
+```
 
-### 2. Real-Time Replay Timeline Scrubbing
-Unlike standard prototypes that mock scrubber states, FailoverOS maintains a reactive history log of `SimulationSnapshot` items. The `ReplayCenter` scrubber and the `AnalyticsPage` charts are connected directly to this history vector, enabling true chronological debugging of outages.
-
-### 3. SVG Aspect Ratio Viewports
-The topology map canvas is built using a native SVG grid with strict coordinate points. By supplying `viewBox="0 0 800 410"` and `preserveAspectRatio="xMidYMid meet"`, the entire agent node grid auto-scales dynamically down to smaller screen sizes without clipping labels or losing position alignment.
-
----
-
-## 🗺️ Future Roadmap
-
-- [ ] **Live Prometheus/Grafana Connector**: Allow teams to map real Kubernetes pods and model gateway traffic streams directly into the SVG topology graph.
-- [ ] **WASM Execution Sandbox**: Compile the simulation kernel into WebAssembly to allow client-side evaluations of larger topologies (500+ nodes).
-- [ ] **Config Export/Import**: Enable infrastructure teams to import their actual gateway failover configs in YAML format.
+Simulated configurations available in `.env.example`:
+* `VITE_SIMULATOR_SPEED`: Telemetry interval scaling ratio.
+* `VITE_DEFAULT_REGION`: Main active deployment region (e.g. `us-east-1`).
+* `VITE_PRIMARY_MODEL`: Primary OpenAI target model.
+* `VITE_SECONDARY_MODEL`: Premium Anthropic failover model.
+* `VITE_FALLBACK_MODEL`: Local edge Llama-3 backup model.
 
 ---
 
-## 👥 Contributors
+## 🚀 Production Deployment Steps
 
-* **Manu Rupan** - *Lead Architect & Engineer* - [GitHub](https://github.com/manurupan2007)
+This project is built as a static Single Page Application (SPA). It can be deployed to any static web hosting provider (Vercel, Netlify, GitHub Pages, AWS S3, Cloudflare Pages).
+
+### Deploying to Vercel
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel` from the root directory.
+3. Select "Link to an existing project: No", name the project `failover-os`, and accept default build configs.
+
+### Deploying to GitHub Pages
+1. Configure `base` path in `vite.config.ts` if deploying to a subfolder (e.g. `base: '/failover-os/'`).
+2. Run `npm run build`.
+3. Push the `/dist` directory to your repository's `gh-pages` branch.
+
+---
+
+## 📸 Screenshots Section
+
+### System Observability Dashboard
+*(Insert screenshot of System Dashboard showing active nodes and dual console terminals)*
+
+### Resilience Playground
+*(Insert screenshot of SLA Sandbox showing agent failover messages during OpenAI Outage)*
+
+---
+
+## 🗺️ Future Improvements
+
+- [ ] **Kubernetes Prometheus Exporter**: Connect real cluster gateway API workloads directly to the SVG map connections load.
+- [ ] **WASM Simulation Core**: Compile telemetry structures into WebAssembly to simulate larger topologies (500+ nodes).
+- [ ] **Config Export YAML**: Allow SRE teams to export AI gateway routing plans in YAML format for direct integration.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License. Feel free to use, modify, and distribute it for hackathons and production architectures alike.
+This project is licensed under the MIT License. Feel free to use and distribute it for hackathons and enterprise portfolios alike.

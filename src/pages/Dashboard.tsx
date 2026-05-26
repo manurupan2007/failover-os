@@ -217,76 +217,76 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col font-sans select-none">
-      {/* HUD Header Bar */}
-      <header className="bg-[#090d16]/95 border-b border-slate-800/80 px-6 py-4 flex items-center justify-between backdrop-blur-md sticky top-0 z-30 shadow-md">
+      {/* SaaS Header Bar */}
+      <header className="bg-slate-950 border-b border-slate-900 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center space-x-3">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 cursor-pointer" onClick={onExit}>
-            <ShieldCheck size={18} />
+          <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-550/20 text-indigo-400 cursor-pointer hover:bg-indigo-500/20 transition-colors" onClick={onExit} title="Exit Workspace">
+            <ShieldCheck size={16} />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-mono font-bold tracking-widest text-white">
-                FAILOVER<span className="text-cyan-400">OS</span>
+              <span className="text-sm font-semibold tracking-wider text-white">
+                Failover<span className="text-indigo-400">OS</span>
               </span>
-              <span className="text-[9px] font-mono border border-slate-800 text-slate-500 px-1.5 py-0.2 rounded-md uppercase">
-                Kernel console
+              <span className="text-[9px] font-mono border border-slate-800 text-slate-500 px-1.5 py-0.2 rounded uppercase">
+                Simulator
               </span>
             </div>
-            <p className="text-[9.5px] font-mono text-slate-500 mt-0.5">
-              Infrastructure Self-Healing System Active • Dynamic Routing Target: us-east-1
+            <p className="text-[9.5px] font-mono text-slate-400 mt-0.5">
+              Enterprise Agentic Infrastructure Resilience Command Center
             </p>
           </div>
         </div>
 
         {/* Tab Navigator */}
-        <div className="flex items-center bg-slate-950 border border-slate-850 px-1 py-1 rounded-lg">
+        <div className="flex items-center bg-slate-900 border border-slate-800 px-1 py-1 rounded-lg">
           <button
             onClick={() => setActiveTab('console')}
-            className={`px-4 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all ${
+            className={`px-4 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-155 ${
               activeTab === 'console'
-                ? 'bg-slate-800/80 text-cyan-400 font-bold border-b border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm'
+                : 'text-slate-450 hover:text-slate-200'
             }`}
           >
-            Mission Operations
+            System Dashboard
           </button>
           <button
             onClick={() => setActiveTab('sandbox')}
-            className={`px-4 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all ${
+            className={`px-4 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-155 ${
               activeTab === 'sandbox'
-                ? 'bg-slate-800/80 text-cyan-400 font-bold border-b border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm'
+                : 'text-slate-450 hover:text-slate-200'
             }`}
           >
-            SLA Resilience Sandbox
+            Resilience Playground
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all ${
+            className={`px-4 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider transition-all duration-155 ${
               activeTab === 'analytics'
-                ? 'bg-slate-800/80 text-cyan-400 font-bold border-b border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-slate-800 text-indigo-400 font-semibold shadow-sm'
+                : 'text-slate-450 hover:text-slate-200'
             }`}
           >
-            Resilience Scorecard
+            SLO Analytics
           </button>
         </div>
 
         {/* Status Hub Indicator */}
         <div className="flex items-center space-x-6">
           <div className="text-right">
-            <div className="text-[9px] font-mono text-slate-500 uppercase">Resilience Index</div>
-            <div className="text-sm font-mono font-bold text-cyan-400">{currentMetrics.overallResilienceScore}%</div>
+            <div className="text-[9.5px] font-mono text-slate-500 uppercase">Resilience Index</div>
+            <div className="text-sm font-mono font-semibold text-indigo-455">{currentMetrics.overallResilienceScore}%</div>
           </div>
           <div className="text-right">
-            <div className="text-[9px] font-mono text-slate-500 uppercase">Avg Latency</div>
-            <div className="text-sm font-mono font-bold text-emerald-400">{currentMetrics.averageLatency}ms</div>
+            <div className="text-[9.5px] font-mono text-slate-500 uppercase">Avg Latency</div>
+            <div className="text-sm font-mono font-semibold text-emerald-455">{currentMetrics.averageLatency}ms</div>
           </div>
           <button
             onClick={onExit}
-            className="px-3 py-1 rounded border border-slate-800 hover:border-rose-500/50 hover:text-rose-400 text-[9px] font-mono text-slate-400 transition-colors"
+            className="px-3 py-1.5 rounded border border-slate-800 hover:border-slate-700 text-[9px] font-mono text-slate-450 hover:text-slate-200 transition-colors"
           >
-            EXIT SESSION
+            EXIT SIMULATION
           </button>
         </div>
       </header>
@@ -300,18 +300,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left/Middle Column (Graph & Playback Scrubber & Live Log stream) */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Cinematic Demo Mode HUD Controller */}
-              <div className={`p-4 rounded-xl border transition-all duration-500 flex flex-col md:flex-row items-center justify-between gap-4 ${
+              {/* Autonomous Demo Mode Sequencer HUD */}
+              <div className={`p-4 rounded-xl border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-4 ${
                 demoActive
-                  ? 'bg-purple-950/20 border-purple-500/80 shadow-[0_0_15px_rgba(168,85,247,0.15)] animate-pulse'
-                  : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700/60'
+                  ? 'bg-indigo-950/10 border-indigo-950 text-indigo-200'
+                  : 'bg-slate-900/45 border-slate-800/80 hover:border-slate-800'
               }`}>
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3.5 h-3.5 rounded-full ${demoActive ? 'bg-purple-500 animate-ping' : 'bg-slate-700'}`} />
+                  <div className={`w-2.5 h-2.5 rounded-full ${demoActive ? 'bg-indigo-400 animate-pulse' : 'bg-slate-700'}`} />
                   <div>
-                    <h4 className="text-xs font-mono font-bold tracking-wider text-slate-200 uppercase flex items-center">
-                      CINEMATIC AUTONOMOUS DEMO ENGINE
-                      {demoActive && <span className="ml-2 px-1.5 py-0.2 text-[8px] bg-purple-950 text-purple-400 border border-purple-800 rounded font-bold uppercase animate-pulse">Running step {demoStep}/24</span>}
+                    <h4 className="text-xs font-mono font-semibold tracking-wider text-slate-200 flex items-center">
+                      AUTONOMOUS ORCHESTRATION DEMO
+                      {demoActive && <span className="ml-2 px-1.5 py-0.2 text-[8px] bg-indigo-950/60 text-indigo-300 border border-indigo-900/45 rounded font-medium uppercase">Step {demoStep}/24</span>}
                     </h4>
                     <p className="text-[9.5px] font-mono text-slate-400 mt-1 leading-normal">
                       {demoActive
@@ -334,16 +334,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {demoActive ? (
                     <button
                       onClick={onStopDemo}
-                      className="px-3.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/40 border border-rose-800/80 hover:border-rose-650 text-rose-300 hover:text-rose-150 text-[9px] font-bold font-mono rounded uppercase tracking-wider transition-all"
+                      className="px-3.5 py-1.5 bg-rose-950/20 hover:bg-rose-900/25 border border-rose-900/60 text-rose-300 hover:text-rose-200 text-[9.5px] font-medium font-mono rounded transition-colors uppercase tracking-wider"
                     >
-                      Stop Demo Mode
+                      Stop Demo
                     </button>
                   ) : (
                     <button
                       onClick={onStartDemo}
-                      className="px-3.5 py-1.5 bg-purple-950/40 hover:bg-purple-900/40 border border-purple-800/80 hover:border-purple-650 text-purple-300 hover:text-purple-150 text-[9px] font-bold font-mono rounded uppercase tracking-wider transition-all shadow-[0_0_10px_rgba(168,85,247,0.15)] hover:shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                      className="px-3.5 py-1.5 bg-indigo-950/20 hover:bg-indigo-900/25 border border-indigo-900/60 text-indigo-300 hover:text-indigo-200 text-[9.5px] font-medium font-mono rounded transition-colors uppercase tracking-wider"
                     >
-                      Start Cinematic Demo
+                      Run Demo
                     </button>
                   )}
                 </div>
