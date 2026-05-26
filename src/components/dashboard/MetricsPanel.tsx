@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { SystemMetrics } from '../engine/types';
+import type { SystemMetrics } from '../../engine/types';
 import { Activity, Clock, ShieldCheck, DollarSign } from 'lucide-react';
 
 interface MetricsPanelProps {

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { NodeState, ConnectionState, LogEntry, SystemMetrics, ActiveMitigation, ChaosIncident, ChaosType, SimulationSnapshot } from '../engine/types';
-import { TopologyGraph } from './TopologyGraph';
-import { MetricsPanel } from './MetricsPanel';
-import { AlertStream } from './AlertStream';
-import { ChaosPanel } from './ChaosPanel';
-import { ReplayCenter } from './ReplayCenter';
-import { AnalyticsPage } from './AnalyticsPage';
+import { TopologyGraph } from '../components/dashboard/TopologyGraph';
+import { MetricsPanel } from '../components/dashboard/MetricsPanel';
+import { AlertStream } from '../components/dashboard/AlertStream';
+import { ChaosPanel } from '../components/dashboard/ChaosPanel';
+import { ReplayCenter } from '../components/dashboard/ReplayCenter';
+import { AnalyticsPage } from '../components/dashboard/AnalyticsPage';
 import type { RecoveryPlan } from '../engine/recoveryEngine';
 import type { CascadePrediction } from '../engine/aiEngine';
 import { Activity, ShieldAlert, RefreshCw, ShieldCheck } from 'lucide-react';

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { NodeState, ConnectionState } from '../engine/types';
+import type { NodeState, ConnectionState } from '../../engine/types';
 import {
   Server,
   Cpu,

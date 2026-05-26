@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { LogEntry } from '../engine/types';
+import type { LogEntry } from '../../engine/types';
 import { AlertCircle, AlertTriangle, Info, CheckCircle, Terminal, Trash2 } from 'lucide-react';
 
 interface AlertStreamProps {

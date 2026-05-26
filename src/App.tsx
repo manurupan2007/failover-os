@@ -5,9 +5,9 @@ import type { CascadePrediction } from './engine/aiEngine';
 import { RecoveryEngine } from './engine/recoveryEngine';
 import type { RecoveryPlan } from './engine/recoveryEngine';
 import { ReplaySystem } from './engine/replaySystem';
-import { LandingPage } from './components/LandingPage';
-import { Dashboard } from './components/Dashboard';
-import { LoadingScreen } from './components/LoadingScreen';
+import { LandingPage } from './pages/LandingPage';
+import { Dashboard } from './pages/Dashboard';
+import { LoadingScreen } from './components/common/LoadingScreen';
 import type {
   NodeState,
   ConnectionState,

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { SimulationSnapshot } from '../engine/types';
+import type { SimulationSnapshot } from '../../engine/types';
 import { BarChart3, TrendingUp, ShieldAlert, Award, Zap, DollarSign } from 'lucide-react';
 
 interface AnalyticsPageProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SimulationSnapshot } from '../engine/types';
+import type { SimulationSnapshot } from '../../engine/types';
 import { Play, Pause, ChevronLeft, ChevronRight, History } from 'lucide-react';
 
 interface ReplayCenterProps {

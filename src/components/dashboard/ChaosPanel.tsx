@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChaosType, ChaosIncident } from '../engine/types';
+import type { ChaosType, ChaosIncident } from '../../engine/types';
 import { Flame, ShieldAlert, Cpu, Play, Pause, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface ChaosPanelProps {
