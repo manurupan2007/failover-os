@@ -93,7 +93,10 @@ export type ChaosType =
   | 'latency_spike'
   | 'memory_overflow'
   | 'queue_congestion'
-  | 'agent_deadlock';
+  | 'agent_deadlock'
+  | 'regional_outage'
+  | 'token_flood'
+  | 'latency_cascade';
 
 export interface ChaosIncident {
   id: string;

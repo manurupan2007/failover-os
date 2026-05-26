@@ -3,6 +3,7 @@ import type { NodeState, ConnectionState, LogEntry, SystemMetrics, ActiveMitigat
 import { TopologyGraph } from '../components/dashboard/TopologyGraph';
 import { MetricsPanel } from '../components/dashboard/MetricsPanel';
 import { AlertStream } from '../components/dashboard/AlertStream';
+import { AIDecisionFeed } from '../components/dashboard/AIDecisionFeed';
 import { ChaosPanel } from '../components/dashboard/ChaosPanel';
 import { ReplayCenter } from '../components/dashboard/ReplayCenter';
 import { AnalyticsPage } from '../components/dashboard/AnalyticsPage';
@@ -38,6 +39,11 @@ interface DashboardProps {
   onStepBackward: () => void;
   onExit: () => void;
   snapshots: SimulationSnapshot[];
+  aiDecisionLogs: LogEntry[];
+  demoActive: boolean;
+  demoStep: number;
+  onStartDemo: () => void;
+  onStopDemo: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -67,6 +73,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStepBackward,
   onExit,
   snapshots,
+  aiDecisionLogs,
+  demoActive,
+  demoStep,
+  onStartDemo,
+  onStopDemo,
 }) => {
   const [activeTab, setActiveTab] = useState<'console' | 'sandbox' | 'analytics'>('console');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>('agent_executor');
@@ -289,6 +300,55 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left/Middle Column (Graph & Playback Scrubber & Live Log stream) */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Cinematic Demo Mode HUD Controller */}
+              <div className={`p-4 rounded-xl border transition-all duration-500 flex flex-col md:flex-row items-center justify-between gap-4 ${
+                demoActive
+                  ? 'bg-purple-950/20 border-purple-500/80 shadow-[0_0_15px_rgba(168,85,247,0.15)] animate-pulse'
+                  : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700/60'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3.5 h-3.5 rounded-full ${demoActive ? 'bg-purple-500 animate-ping' : 'bg-slate-700'}`} />
+                  <div>
+                    <h4 className="text-xs font-mono font-bold tracking-wider text-slate-200 uppercase flex items-center">
+                      CINEMATIC AUTONOMOUS DEMO ENGINE
+                      {demoActive && <span className="ml-2 px-1.5 py-0.2 text-[8px] bg-purple-950 text-purple-400 border border-purple-800 rounded font-bold uppercase animate-pulse">Running step {demoStep}/24</span>}
+                    </h4>
+                    <p className="text-[9.5px] font-mono text-slate-400 mt-1 leading-normal">
+                      {demoActive
+                        ? `DEMO PHASE: ${
+                            demoStep < 3 ? 'US-East-1 Nominal Operation (Uptime: 100%)' :
+                            demoStep < 6 ? 'Critical Cascade: BGP Link failure severance injected' :
+                            demoStep < 9 ? 'AI Anomaly Analysis: SLA breach calculation warning' :
+                            demoStep < 12 ? 'AI Healing Phase 1: Rebalancing load gateway configurations' :
+                            demoStep < 15 ? 'Local Llama-3 Active in us-west-2 region' :
+                            demoStep < 18 ? 'Secondary Outage: Payload token volume surge' :
+                            demoStep < 21 ? 'AI Healing Phase 2: Active Context prompt compression' :
+                            'System Calibrated & Restored. Resetting...'
+                          }`
+                        : 'Simulate scripted infrastructure outages, AI detection reasoning, self-healing routing failover, and prompt context compression.'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  {demoActive ? (
+                    <button
+                      onClick={onStopDemo}
+                      className="px-3.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/40 border border-rose-800/80 hover:border-rose-650 text-rose-300 hover:text-rose-150 text-[9px] font-bold font-mono rounded uppercase tracking-wider transition-all"
+                    >
+                      Stop Demo Mode
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onStartDemo}
+                      className="px-3.5 py-1.5 bg-purple-950/40 hover:bg-purple-900/40 border border-purple-800/80 hover:border-purple-650 text-purple-300 hover:text-purple-150 text-[9px] font-bold font-mono rounded uppercase tracking-wider transition-all shadow-[0_0_10px_rgba(168,85,247,0.15)] hover:shadow-[0_0_15px_rgba(168,85,247,0.35)]"
+                    >
+                      Start Cinematic Demo
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Topology SVG map */}
               <div className="relative">
                 <div className="absolute top-3 left-4 z-20 flex items-center space-x-2">
@@ -316,8 +376,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onStepBackward={onStepBackward}
               />
 
-              {/* Live telemetry console alert stream */}
-              <AlertStream logs={logs} onClearLogs={onClearLogs} />
+              {/* Dual Observable Telemetry Streams: Events and SRE AI Decisions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AlertStream logs={logs} onClearLogs={onClearLogs} />
+                <AIDecisionFeed logs={aiDecisionLogs} />
+              </div>
             </div>
 
             {/* Right Column Sidebar (Node details & AI Predictions & Controls) */}

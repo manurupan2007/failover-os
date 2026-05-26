@@ -376,6 +376,21 @@ export class SimulationEngine {
         severity = 'high';
         description = 'Agent Swarm locked in a cyclic tool-dependency state. High CPU loops.';
         break;
+      case 'regional_outage':
+        nodeId = 'api_gateway';
+        severity = 'critical';
+        description = 'US-East-1 AWS primary network links severed due to BGP routing issues';
+        break;
+      case 'token_flood':
+        nodeId = 'truefoundry_gateway';
+        severity = 'high';
+        description = 'Sustained user traffic flood injecting context payloads exceeding 300k tokens';
+        break;
+      case 'latency_cascade':
+        nodeId = 'vector_db';
+        severity = 'high';
+        description = 'Downstream segment lock on Pinecone index propagates latency delays upstream';
+        break;
     }
 
     const incident: ChaosIncident = {
@@ -454,13 +469,30 @@ export class SimulationEngine {
     this.relativeTime += 1000;
     this.totalTicks += 1;
 
-    // Reset temporary states
+    // Reset temporary states with minor organic fluctuations
     this.nodes.forEach((node) => {
       node.throughput = 0;
-      node.latency = this.getBaseLatency(node.id);
+      
+      const baseLat = this.getBaseLatency(node.id);
+      // Healthy or recovering nodes experience minor latency variations
+      const latFluct = baseLat > 0 && node.status !== 'critical'
+        ? Math.sin(this.totalTicks * 0.4 + node.id.charCodeAt(0)) * (baseLat * 0.06) + (Math.random() - 0.5) * (baseLat * 0.04)
+        : 0;
+      node.latency = Math.max(Math.round(baseLat + latFluct), baseLat > 0 ? 1 : 0);
+      
       node.errorRate = 0.0;
-      node.cpuUsage = this.getBaseCpu(node.id);
-      node.memoryUsage = this.getBaseMemory(node.id);
+
+      const baseCpu = this.getBaseCpu(node.id);
+      const cpuFluct = baseCpu > 0 && node.status !== 'critical'
+        ? Math.sin(this.totalTicks * 0.2 + node.id.charCodeAt(1)) * 3 + (Math.random() - 0.5) * 4
+        : 0;
+      node.cpuUsage = Math.max(Math.min(Math.round(baseCpu + cpuFluct), 95), baseCpu > 0 ? 2 : 0);
+
+      const baseMem = this.getBaseMemory(node.id);
+      const memFluct = baseMem > 0 && node.status !== 'critical'
+        ? Math.sin(this.totalTicks * 0.15 + node.id.charCodeAt(2)) * 1.5 + (Math.random() - 0.5) * 2
+        : 0;
+      node.memoryUsage = Math.max(Math.min(Math.round(baseMem + memFluct), 98), baseMem > 0 ? 3 : 0);
     });
 
     // Step 1: Process active mitigations and recovery progress
@@ -653,6 +685,24 @@ export class SimulationEngine {
           node.memoryUsage = 80;
           node.failureReason = 'Aggressive Retry Loop Storm';
           break;
+        case 'regional_outage':
+          node.status = 'critical';
+          node.errorRate = 1.0;
+          node.latency = 10000;
+          node.failureReason = 'Region us-east-1 completely unresponsive';
+          break;
+        case 'token_flood':
+          node.status = 'unstable';
+          node.cpuUsage = 95;
+          node.memoryUsage = 90;
+          node.promptCompressionRatio = 1.0;
+          node.failureReason = 'Prompt token overload';
+          break;
+        case 'latency_cascade':
+          node.status = 'unstable';
+          node.latency = 3500;
+          node.failureReason = 'Downstream segment Lock wait';
+          break;
       }
     });
   }
@@ -758,6 +808,66 @@ export class SimulationEngine {
         agent.status = 'unstable';
         agent.queueDepth = Math.min(agent.queueDepth + 10, agent.maxQueueDepth);
         openAiRouter.errorRate = 0.85;
+      }
+    }
+
+    // 6. Regional Outage -> If active, all nodes in us-east-1 are impacted.
+    if (isIncident('regional_outage')) {
+      const eastNodes = this.nodes.filter(n => n.region === 'us-east-1');
+      eastNodes.forEach(node => {
+        if (node.id === 'api_gateway' && hasMitigation('load_rebalancing', 'api_gateway')) {
+          node.status = 'recovering';
+          node.latency = 80;
+          node.errorRate = 0.05;
+        } else {
+          node.status = 'critical';
+          node.errorRate = Math.max(node.errorRate, 0.85);
+          node.latency = Math.max(node.latency, 8000);
+          node.failureReason = 'US-East-1 region blackout (Unmitigated)';
+        }
+      });
+      if (this.totalTicks % 3 === 0 && !hasMitigation('load_rebalancing', 'api_gateway')) {
+        this.addLog('error', 'ai_predictor', 'CRITICAL: US-East-1 outage detected. All regional nodes unresponsive. Direct traffic failover to us-west-2 required!', 'api_gateway');
+      }
+    }
+
+    // 7. Token Flood -> Overloads LLM router and propagates memory pressure and queue saturation.
+    if (isIncident('token_flood')) {
+      const gw = this.nodes.find(n => n.id === 'truefoundry_gateway')!;
+      const openai = this.nodes.find(n => n.id === 'openai_provider')!;
+      
+      if (!hasMitigation('context_compression', 'truefoundry_gateway')) {
+        gw.status = 'critical';
+        gw.memoryUsage = 99;
+        gw.cpuUsage = 95;
+        
+        openai.latency = 6500;
+        openai.errorRate = 0.5;
+        openai.status = 'critical';
+        openai.failureReason = 'Payload Context limit exceeded (>300k tokens)';
+        
+        if (this.totalTicks % 3 === 0) {
+          this.addLog('warning', 'ai_predictor', 'Token flood payload limits breached on TrueFoundry. Upstream OpenAI throughput failing. Apply prompt context compression!', 'truefoundry_gateway');
+        }
+      }
+    }
+
+    // 8. Latency Cascade -> Latency propagates from DB / Downstream up to the API Gateway.
+    if (isIncident('latency_cascade')) {
+      const vdb = this.nodes.find(n => n.id === 'vector_db')!;
+      const agent = this.nodes.find(n => n.id === 'agent_executor')!;
+      const router = this.nodes.find(n => n.id === 'semantic_router')!;
+      const gw = this.nodes.find(n => n.id === 'api_gateway')!;
+
+      if (!hasMitigation('degraded_mode', 'agent_executor')) {
+        vdb.latency = Math.max(vdb.latency, 4000);
+        agent.latency = Math.max(agent.latency, vdb.latency + 800);
+        router.latency = Math.max(router.latency, agent.latency + 200);
+        gw.latency = Math.max(gw.latency, router.latency + 100);
+
+        if (this.totalTicks % 4 === 0) {
+          this.addLog('warning', 'ai_predictor', 'Downstream DB lock latency cascading to API Gateway. Throttling active routing lines.', 'api_gateway');
+        }
       }
     }
   }

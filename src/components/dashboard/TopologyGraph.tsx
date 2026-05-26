@@ -133,15 +133,18 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
       let particleSpeed = '4s';
       let particleColor = '#10b981'; // green
       let particleCount = conn.load > 0 ? Math.min(Math.max(Math.round(conn.load / 8), 1), 5) : 0;
+      let flickerClass = '';
 
       if (conn.status === 'severed') {
-        strokeColor = 'stroke-rose-600/50';
+        strokeColor = 'stroke-rose-600/70';
         strokeDash = '6,4';
         particleCount = 0;
+        flickerClass = 'animate-flicker';
       } else if (conn.status === 'congested') {
-        strokeColor = 'stroke-amber-500/70';
-        particleSpeed = '10s'; // slow flow
+        strokeColor = 'stroke-amber-500/80';
+        particleSpeed = '9s'; // slow flow
         particleColor = '#f59e0b'; // amber
+        flickerClass = 'animate-flicker';
       } else {
         // active/healthy
         if (conn.load > 30) {
@@ -159,6 +162,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
         particleCount,
         load: conn.load,
         status: conn.status,
+        flickerClass,
       };
     });
   }, [connections]);
@@ -201,7 +205,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
               <path
                 d={path.pathData}
                 fill="none"
-                className={`${path.strokeColor} transition-all duration-700`}
+                className={`${path.strokeColor} ${path.flickerClass || ''} transition-all duration-700`}
                 strokeWidth={path.status === 'severed' ? 1.5 : 2}
                 strokeDasharray={path.strokeDash}
               />
@@ -228,12 +232,17 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
 
           const isSelected = selectedNodeId === node.id;
           const colors = getNodeColors(node.status, isSelected);
+          const jitterClass = node.status === 'critical'
+            ? 'animate-jitter-critical'
+            : node.status === 'unstable'
+            ? 'animate-jitter-unstable'
+            : '';
 
           return (
             <g
               key={node.id}
               transform={`translate(${layout.x}, ${layout.y})`}
-              className="cursor-pointer group"
+              className={`cursor-pointer group ${jitterClass}`}
               onClick={() => onSelectNode(node.id)}
             >
               {/* Recovery cyan scan ring */}
@@ -248,7 +257,21 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
               {node.status === 'critical' && (
                 <circle
                   r="26"
-                  className="fill-none stroke-rose-500/40 stroke-2 animate-ping"
+                  className="fill-none stroke-rose-500/45 stroke-2 animate-ping"
+                />
+              )}
+
+              {/* Glowing visual backdrop ring for failures */}
+              {node.status === 'critical' && (
+                <circle
+                  r="22"
+                  className="fill-rose-500/10 stroke-rose-500/20 stroke-[3px] glow-rose-pulse"
+                />
+              )}
+              {node.status === 'unstable' && (
+                <circle
+                  r="22"
+                  className="fill-amber-500/5 stroke-amber-500/25 stroke-[2px] glow-amber-pulse"
                 />
               )}
 
