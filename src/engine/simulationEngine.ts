@@ -573,25 +573,56 @@ export class SimulationEngine {
   private processRecoveries(): void {
     this.nodes.forEach((node) => {
       if (node.status === 'recovering') {
-        node.recoveryProgress += 20; // 5 ticks to recover completely (5s)
-        node.latency = this.getBaseLatency(node.id) * 1.5;
-        node.errorRate = 0.15;
-        node.cpuUsage = this.getBaseCpu(node.id) * 2;
-        node.memoryUsage = this.getBaseMemory(node.id) * 1.2;
+        // Recover at +33 per tick = ~3 ticks (3s) to full health
+        node.recoveryProgress = Math.min(node.recoveryProgress + 33, 100);
+
+        // Linearly interpolate metrics toward baseline during recovery
+        const t = node.recoveryProgress / 100;
+        const baseLat = this.getBaseLatency(node.id);
+        const baseCpu = this.getBaseCpu(node.id);
+        const baseMem = this.getBaseMemory(node.id);
+
+        // Start at 1.8x degraded, linearly improve to base
+        node.latency   = Math.round(baseLat * (1.8 - 0.8 * t));
+        node.cpuUsage  = Math.min(Math.round(baseCpu  * (2.0 - 1.0 * t)), 95);
+        node.memoryUsage = Math.min(Math.round(baseMem * (1.5 - 0.5 * t)), 95);
+        node.errorRate = Math.max(0.15 - 0.15 * t, 0);
+        node.queueDepth = Math.max(Math.round(node.queueDepth * (1 - t * 0.5)), 0);
 
         if (node.recoveryProgress >= 100) {
           node.status = 'healthy';
           node.recoveryProgress = 0;
-          this.addLog('success', 'recovery_engine', `Node [${node.name}] successfully recovered and calibrated. Uptime normal.`, node.id);
+          node.failureReason = undefined;
+          node.latency = baseLat;
+          node.cpuUsage = baseCpu;
+          node.memoryUsage = baseMem;
+          node.errorRate = 0;
+          this.addLog('success', 'recovery_engine', `Node [${node.name}] fully recovered. All metrics nominal.`, node.id);
         }
       }
     });
+  }
+
+  // Returns true when a node has an active mitigation that shields it from direct failure
+  private isNodeMitigated(nodeId: string): boolean {
+    return this.activeMitigations.some((m) => m.nodeId === nodeId) ||
+      // degraded_mode on agent_executor shields it from mcp/vdb cascades
+      (nodeId === 'agent_executor' && this.activeMitigations.some((m) => m.type === 'degraded_mode' && m.nodeId === 'agent_executor')) ||
+      // failover on truefoundry_gateway shields it from openai outage
+      (nodeId === 'truefoundry_gateway' && this.activeMitigations.some((m) => m.type === 'failover' && m.nodeId === 'truefoundry_gateway'));
   }
 
   private applyInjectedFailures(): void {
     this.activeChaosIncidents.forEach((incident) => {
       const node = this.nodes.find((n) => n.id === incident.nodeId);
       if (!node) return;
+
+      // If a direct mitigation is shielding this specific node, allow it to stay in
+      // recovering/healthy state rather than forcing it back to critical.
+      const directlyMitigated = this.activeMitigations.some((m) => m.nodeId === node.id);
+      if (directlyMitigated && (node.status === 'recovering' || node.status === 'healthy')) {
+        return; // mitigation is active, don't force degradation
+      }
 
       node.status = 'critical';
 
@@ -880,40 +911,72 @@ export class SimulationEngine {
       switch (policy.type) {
         case 'failover':
           if (node.id === 'truefoundry_gateway') {
-            // Managed in routing
-            node.status = 'recovering';
+            // Failover shields the LLM gateway — restore it to healthy so routing works
+            node.status = 'healthy';
+            node.errorRate = 0;
+            node.latency = this.getBaseLatency(node.id);
+            node.cpuUsage = Math.max(node.cpuUsage - 10, this.getBaseCpu(node.id));
+            node.memoryUsage = Math.max(node.memoryUsage - 5, this.getBaseMemory(node.id));
+            node.failureReason = 'FAILOVER ACTIVE: Traffic rerouted to backup LLM provider';
           }
           break;
 
         case 'circuit_breaking':
           if (policy.nodeId === 'vector_db') {
-            // Isolates corrupt Vector DB, preventing latency propagation
+            // The VectorDB remains in its chaos state (corrupt) but its problems are isolated.
             const vectorDb = this.nodes.find((n) => n.id === 'vector_db')!;
-            vectorDb.status = 'critical';
-            vectorDb.failureReason = 'CIRCUIT BREAKER: TRIPPED (Isolated)';
+            vectorDb.failureReason = 'CIRCUIT BREAKER: TRIPPED (Isolated — not propagating)';
 
+            // Agent is now fully protected — restore it to healthy baseline
             const agent = this.nodes.find((n) => n.id === 'agent_executor')!;
-            // Latency doesn't propagate because database queries are skipped/mocked
-            agent.latency = this.getBaseLatency(agent.id) + 10; // tiny overhead only
-            agent.cpuUsage = Math.max(agent.cpuUsage - 20, 10);
+            if (agent.status !== 'critical' || agent.failureReason?.includes('queue')) {
+              agent.status = 'healthy';
+            }
+            agent.latency = this.getBaseLatency(agent.id) + 15;
+            agent.cpuUsage = Math.max(this.getBaseCpu(agent.id), Math.round(agent.cpuUsage * 0.6));
+            agent.memoryUsage = Math.max(this.getBaseMemory(agent.id), Math.round(agent.memoryUsage * 0.7));
+            agent.errorRate = Math.max(agent.errorRate - 0.2, 0);
+            // Drain agent queue quickly
+            agent.queueDepth = Math.max(agent.queueDepth - 10, 0);
           }
           if (policy.nodeId === 'semantic_router') {
-            // API Gateway stops sending traffic to semantic router during heavy storm
+            // API Gateway is protected from the retry storm
             const gateway = this.nodes.find((n) => n.id === 'api_gateway')!;
             gateway.status = 'healthy';
-            gateway.errorRate = 0.1; // tiny error rate for shedding traffic
+            gateway.errorRate = 0.05;
             gateway.latency = this.getBaseLatency('api_gateway');
+            gateway.cpuUsage = Math.max(this.getBaseCpu('api_gateway'), Math.round(gateway.cpuUsage * 0.5));
+            gateway.memoryUsage = Math.max(this.getBaseMemory('api_gateway'), Math.round(gateway.memoryUsage * 0.5));
+            // Also drain the semantic router queue gradually
+            const router = this.nodes.find((n) => n.id === 'semantic_router')!;
+            router.queueDepth = Math.max(router.queueDepth - 15, 0);
+            if (router.queueDepth < router.maxQueueDepth * 0.3) {
+              router.status = 'recovering';
+            }
           }
           break;
 
         case 'context_compression':
           if (policy.nodeId === 'truefoundry_gateway') {
-            const openAiRouter = this.nodes.find((n) => n.id === 'truefoundry_gateway')!;
-            openAiRouter.promptCompressionRatio = 0.4; // 60% compression
-            // Decreases upstream LLM latency by 20%
+            const llmRouter = this.nodes.find((n) => n.id === 'truefoundry_gateway')!;
+            llmRouter.promptCompressionRatio = 0.4;
+            // Restore TrueFoundry gateway health from token_flood
+            if (llmRouter.status !== 'healthy') {
+              llmRouter.status = 'recovering';
+              llmRouter.cpuUsage = Math.max(Math.round(llmRouter.cpuUsage * 0.65), this.getBaseCpu('truefoundry_gateway'));
+              llmRouter.memoryUsage = Math.max(Math.round(llmRouter.memoryUsage * 0.65), this.getBaseMemory('truefoundry_gateway'));
+            }
+            // Alleviate LLM latency significantly
             this.nodes.forEach((n) => {
-              if (n.type === 'llm' && n.status !== 'critical') {
-                n.latency = Math.round(n.latency * 0.7);
+              if (n.type === 'llm') {
+                // Only clamp — don't drop below base
+                const base = this.getBaseLatency(n.id);
+                n.latency = Math.max(Math.round(n.latency * 0.65), base);
+                // Also reduce error rate (rate limit situation improves)
+                n.errorRate = Math.max(n.errorRate - 0.25, 0);
+                if (n.errorRate === 0 && n.status === 'unstable') {
+                  n.status = 'recovering';
+                }
               }
             });
           }
@@ -922,19 +985,30 @@ export class SimulationEngine {
         case 'degraded_mode':
           if (policy.nodeId === 'agent_executor') {
             const agent = this.nodes.find((n) => n.id === 'agent_executor')!;
+            // Degraded mode fully restores agent — it uses static fallbacks instead of broken tools
             agent.status = 'healthy';
-            agent.errorRate = 0.05; // tiny error rate (degraded function fallback)
-            agent.latency = this.getBaseLatency('agent_executor') - 10; // faster execution because vectors/tool queries are stubbed
-            agent.failureReason = 'DEGRADED OPERATION ACTIVE (Fallback static tools)';
+            agent.errorRate = 0.04;
+            agent.latency = this.getBaseLatency('agent_executor') + 5;
+            agent.cpuUsage = Math.max(this.getBaseCpu('agent_executor'), Math.round(agent.cpuUsage * 0.55));
+            agent.memoryUsage = Math.max(this.getBaseMemory('agent_executor'), Math.round(agent.memoryUsage * 0.6));
+            agent.queueDepth = Math.max(agent.queueDepth - 12, 0);
+            agent.failureReason = 'DEGRADED MODE ACTIVE: Tool calls stubbed with static fallbacks';
           }
           break;
 
         case 'load_rebalancing':
-          // Re-allocates resources
+          // Actively drains queues and restores all stressed nodes
           this.nodes.forEach((n) => {
             if (n.status === 'unstable') {
-              n.status = 'healthy';
-              n.queueDepth = Math.round(n.queueDepth * 0.5);
+              n.status = 'recovering';
+              n.queueDepth = Math.max(Math.round(n.queueDepth * 0.4), 0);
+              n.cpuUsage = Math.max(Math.round(n.cpuUsage * 0.5), this.getBaseCpu(n.id));
+              n.memoryUsage = Math.max(Math.round(n.memoryUsage * 0.6), this.getBaseMemory(n.id));
+            } else if (n.status === 'critical' && n.failureReason?.includes('us-east-1')) {
+              // Regional outage: mark as recovering when rebalancing to us-west-2
+              n.status = 'recovering';
+              n.errorRate = Math.max(n.errorRate - 0.3, 0.05);
+              n.latency = Math.min(n.latency, 300);
             }
           });
           break;
@@ -1062,54 +1136,63 @@ export class SimulationEngine {
 
   private updateNodeResources(): void {
     const isIncident = (type: ChaosType) => this.activeChaosIncidents.some((c) => c.type === type);
+    const hasMitigation = (type: string, nodeId: string) => this.activeMitigations.some((m) => m.type === type && m.nodeId === nodeId);
 
     this.nodes.forEach((node) => {
+      // Skip resource hammering for nodes actively being recovered by a policy.
+      // Their metrics are managed by applyActivePolicies() directly.
+      const isMitigatedNode = this.isNodeMitigated(node.id);
+      const isRecoveringOrHealthy = node.status === 'recovering' || node.status === 'healthy';
+      if (isMitigatedNode && isRecoveringOrHealthy) {
+        // Only apply light drain to queues, don't add more load
+        const drain = Math.round(this.getBaseLatency(node.id) > 0 ? (1000 / this.getBaseLatency(node.id)) * 8 : 60);
+        node.queueDepth = Math.max(node.queueDepth - drain, 0);
+        return;
+      }
+
       // Compute queue depth dynamics
       if (node.status === 'critical') {
         node.queueDepth = Math.min(node.queueDepth + Math.round(node.throughput * 0.4), node.maxQueueDepth);
       } else if (node.status === 'unstable') {
-        node.queueDepth = Math.min(node.queueDepth + Math.round(node.throughput * 0.15), node.maxQueueDepth);
+        node.queueDepth = Math.min(node.queueDepth + Math.round(node.throughput * 0.12), node.maxQueueDepth);
+      } else if (node.status === 'recovering') {
+        // Recovering nodes drain queues twice as fast as critical adds them
+        const drain = Math.round(this.getBaseLatency(node.id) > 0 ? (1000 / this.getBaseLatency(node.id)) * 8 : 60);
+        node.queueDepth = Math.max(node.queueDepth - drain, 0);
       } else {
-        // Drain queue
+        // Healthy: drain queue
         const drain = Math.round(this.getBaseLatency(node.id) > 0 ? (1000 / this.getBaseLatency(node.id)) * 5 : 50);
         node.queueDepth = Math.max(node.queueDepth - drain, 0);
       }
 
-      // Compute CPU and memory loads based on throughput and queue
-      const throughputFactor = node.throughput / this.targetThroughput;
-      const queueFactor = node.queueDepth / node.maxQueueDepth;
+      // Only compound CPU/memory for non-recovering non-mitigated nodes
+      if (node.status !== 'recovering') {
+        const throughputFactor = node.throughput / this.targetThroughput;
+        const queueFactor = node.queueDepth / node.maxQueueDepth;
 
-      node.cpuUsage = Math.min(
-        Math.round(
-          node.cpuUsage +
-          throughputFactor * 15 +
-          queueFactor * 40
-        ),
-        100
-      );
-
-      node.memoryUsage = Math.min(
-        Math.round(
-          node.memoryUsage +
-          throughputFactor * 10 +
-          queueFactor * 30
-        ),
-        100
-      );
+        node.cpuUsage = Math.min(
+          Math.round(node.cpuUsage + throughputFactor * 12 + queueFactor * 35),
+          100
+        );
+        node.memoryUsage = Math.min(
+          Math.round(node.memoryUsage + throughputFactor * 8 + queueFactor * 25),
+          100
+        );
+      }
 
       // Memory leak / token spikes can override this
-      if (node.id === 'api_gateway' && isIncident('memory_overflow')) {
+      if (node.id === 'api_gateway' && isIncident('memory_overflow') && !hasMitigation('circuit_breaking', 'semantic_router')) {
         node.memoryUsage = 99;
         node.cpuUsage = 98;
       }
 
-      if (node.id === 'agent_executor' && isIncident('agent_deadlock')) {
+      if (node.id === 'agent_executor' && isIncident('agent_deadlock') && !hasMitigation('degraded_mode', 'agent_executor')) {
         node.cpuUsage = 100;
-        node.memoryUsage = Math.min(node.memoryUsage + 20, 96);
+        node.memoryUsage = Math.min(node.memoryUsage + 15, 96);
       }
 
-      // If queue exceeds 95% capacity, node goes unstable or critical
-      if (node.queueDepth >= node.maxQueueDepth && node.status !== 'critical') {
+      // If queue exceeds 100% capacity on a non-mitigated node, it goes critical
+      if (node.queueDepth >= node.maxQueueDepth && node.status !== 'critical' && !isMitigatedNode) {
         node.status = 'critical';
         node.errorRate = 0.9;
         node.failureReason = 'Buffer queue allocation exhausted (Drop requests)';

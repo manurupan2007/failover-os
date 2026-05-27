@@ -167,14 +167,22 @@ export function App() {
       );
       // Apply mitigations automatically if in Autonomous Mode and not in demo mode
       if (isAutonomous && plans.length > 0 && !demoActive) {
+        const currentMitigations = engine.getActiveMitigations();
+        
         plans.forEach((plan) => {
-          engine.addMitigation({
-            name: plan.name,
-            nodeId: plan.targetNodeId,
-            type: plan.type,
-            description: plan.description,
-            impactSummary: plan.expectedOutcome,
-          });
+          // Only add if this type+node combination is not already applied
+          const alreadyApplied = currentMitigations.some(
+            (m) => m.type === plan.type && m.nodeId === plan.targetNodeId
+          );
+          if (!alreadyApplied) {
+            engine.addMitigation({
+              name: plan.name,
+              nodeId: plan.targetNodeId,
+              type: plan.type,
+              description: plan.description,
+              impactSummary: plan.expectedOutcome,
+            });
+          }
         });
         
         // Refresh plans after immediate application
