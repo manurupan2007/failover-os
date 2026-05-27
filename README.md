@@ -1,6 +1,14 @@
-# FailoverOS — Autonomous Resilience Layer for AI Infrastructure
+# FailoverOS — Autonomous Resilience Layer for Agentic AI
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=flat-square&logo=vercel)](https://failover-os.vercel.app/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://github.com/manurupan2007/failover-os)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 > A production-grade telemetry cockpit, cascading failure predictor, and autonomous self-healing coordinator designed to safeguard LLM agent swarms, vector store integrations, and tool execution pipelines against infrastructure collapses.
+
+## 🔗 Live Application
+The live interactive simulator is deployed and available at:
+👉 **[https://failover-os.vercel.app/](https://failover-os.vercel.app/)**
 
 ---
 
@@ -8,7 +16,7 @@
 
 Multi-agent AI architectures represent a major advancement in application design, but they introduce a new layer of infrastructure fragility. A single rate-limit bottleneck (HTTP 429), upstream API outage (HTTP 503), or vector index segment lock can propagate latency spikes upstream, trigger infinite agent retry loops, inflate token billing expenses, and crash client workflows.
 
-**FailoverOS** is an enterprise-grade simulator and resilience manager for agentic AI infrastructure. By acting as an intelligent orchestration controller, it monitors the health of upstream LLM backends (OpenAI, Anthropic, Local models), prompt cache tiers, vector index partitions, and Model Context Protocol (MCP) tool hosts. It utilizes graph-based BFS paths to detect cascading risks and applies autonomous healing policies (e.g., dynamic model failover, prompt context compression, circuit breakers, and degraded mock-tool operations) in real-time to keep workflows running within strict SLA targets.
+**FailoverOS** is an enterprise-grade simulator and resilience manager for agentic AI infrastructure. By acting as an intelligent orchestration controller, it monitors the health of upstream LLM backends (OpenAI, Anthropic, Local models), prompt cache tiers, vector index partitions, and Model Context Protocol (MCP) tool hosts. It utilizes graph-based dependency scans to detect cascading risks and applies autonomous healing policies (e.g., dynamic model failover, prompt context compression, circuit breakers, and degraded mock-tool operations) in real-time to keep workflows running within strict SLA targets.
 
 ---
 
@@ -50,7 +58,7 @@ graph TD
   4. *MCP Tool Crash*: Tool Executor process crashes via segmentation fault.
   5. *Gateway Memory Leak*: Memory ceiling heap pressure causing GC freezes.
   6. *Queue Saturation*: Buffer queue allocation exhausted, request drops.
-  7. *Regional Outage*: AWS US-East-1 region blackout ( severed BGP routing).
+  7. *Regional Outage*: AWS US-East-1 region blackout (severed BGP routing).
   8. *Token Flood Attack*: Multi-prompt payload surge exceeding 300k tokens.
   9. *Agent Deadlock*: Swarm loop deadlocked in cyclical dependencies.
   10. *Latency Cascade*: Downstream index locks propagating latency delay upstream.
@@ -64,7 +72,7 @@ graph TD
 ## 💻 Tech Stack
 
 * **Core Framework**: React 19 + TypeScript + Vite 8
-* **Styling & Theme**: Tailwind CSS v4 (Clean, minimal, slate enterprise dashboard theme)
+* **Styling & Theme**: Vanilla CSS and Tailwind CSS v4 (Clean, minimal, slate enterprise dashboard theme)
 * **Icons & Graphics**: Lucide React + custom responsive SVGs
 * **Build System**: ESNext compiler targets (`tsc -b` + vite production minifier)
 
@@ -131,13 +139,13 @@ This project is built as a static Single Page Application (SPA). It can be deplo
 
 ---
 
-## 📸 Screenshots Section
+## 📸 Screenshots
 
-### System Observability Dashboard
-*(Insert screenshot of System Dashboard showing active nodes and dual console terminals)*
+### Observability Dashboard Cockpit
+![System Dashboard](./src/assets/dashboard_screenshot.png)
 
-### Resilience Playground
-*(Insert screenshot of SLA Sandbox showing agent failover messages during OpenAI Outage)*
+### SLO Analytics Integrity Scorecard
+![SLO Table and Performance Graph](./src/assets/analytics_screenshot.png)
 
 ---
 
