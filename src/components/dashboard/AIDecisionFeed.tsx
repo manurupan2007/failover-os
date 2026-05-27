@@ -8,11 +8,13 @@ interface AIDecisionFeedProps {
 
 export const AIDecisionFeed: React.FC<AIDecisionFeedProps> = ({ logs }) => {
   const [filter, setFilter] = useState<'all' | 'routing' | 'mitigation' | 'threat'>('all');
-  const feedEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of the feed when new AI logs arrive
+  // Auto-scroll to bottom of the feed container when new AI logs arrive
   useEffect(() => {
-    feedEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
   const filteredLogs = logs.filter((log) => {
@@ -83,7 +85,10 @@ export const AIDecisionFeed: React.FC<AIDecisionFeedProps> = ({ logs }) => {
       </div>
 
       {/* Scrolling Decisions Stream */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent z-10">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto space-y-2 pr-1.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent z-10"
+      >
         {filteredLogs.length === 0 ? (
           <div className="h-full flex items-center justify-center flex-col text-slate-500 opacity-60">
             <Sparkles size={14} className="text-indigo-500/40 mb-1" />
@@ -112,7 +117,6 @@ export const AIDecisionFeed: React.FC<AIDecisionFeedProps> = ({ logs }) => {
             </div>
           ))
         )}
-        <div ref={feedEndRef} />
       </div>
     </div>
   );
